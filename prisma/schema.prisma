@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  PARKING_ADMIN
+  WORKER
+}
+
+enum BillingMode {
+  MINUTE
+  HOUR
+  DAY
+  MONTH
+}
+
+enum VehicleStatus {
+  PARKED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  role          Role      @default(WORKER)
+  name          String
+  phone         String?
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  owned_parkings    ParkingFacility[]
+  registered_vehicles Vehicle[]
+  created_transactions Transaction[]
+  assigned_parkings   ParkingWorker[]
+  subscriptions       Subscription[]
+  activity_logs       ActivityLog[]
+}
+
+model Subscription {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id])
+  plan_type   String
+  status      String   @default("active")
+  start_date  DateTime
+  end_date    DateTime
+  amount_clp  Int
+  created_at  DateTime @default(now())
+}
+
+model ParkingFacility {
+  id            String   @id @default(uuid())
+  name          String
+  address       String
+  description   String?
+  total_spots   Int      @default(0)
+  reserved_spots Int     @default(0)
+  owner_id      String
+  owner         User     @relation(fields: [owner_id], references: [id])
+  is_public     Boolean  @default(true)
+  is_active     Boolean  @default(true)
+  latitude      Float?
+  longitude     Float?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  pricing_config PricingConfig?
+  vehicles       Vehicle[]
+  workers        ParkingWorker[]
+  subscribers      Subscriber[]
+  spots          ParkingSpot[]
+  notifications  Notification[]
+  activity_log   ActivityLog[]
+}
+
+model PricingConfig {
+  id              String      @id @default(uuid())
+  parking_id      String      @unique
+  parking         ParkingFacility @relation(fields: [parking_id], references: [id])
+  price_per_minute Int?
+  price_per_hour   Int?
+  price_per_day    Int?
+  price_per_month  Int?
+  billing_mode     BillingMode @default(HOUR)
+  updated_at       DateTime    @updatedAt
+}
+
+model ParkingSpot {
+  id          String   @id @default(uuid())
+  parking_id  String
+  parking     ParkingFacility @relation(fields: [parking_id], references: [id])
+  spot_number String
+  is_reserved Boolean  @default(false)
+  is_occupied Boolean  @default(false)
+  vehicles    Vehicle[]
+
+  @@unique([parking_id, spot_number])
+}
+
+model Subscriber {
+  id              String   @id @default(uuid())
+  parking_id      String
+  parking         ParkingFacility @relation(fields: [parking_id], references: [id])
+  license_plate   String
+  owner_name      String?
+  owner_phone     String?
+  monthly_fee_clp Int
+  start_date      DateTime
+  end_date        DateTime
+  is_active       Boolean  @default(true)
+  notes           String?
+  created_at      DateTime @default(now())
+
+  @@unique([parking_id, license_plate])
+}
+
+model Vehicle {
+  id            String        @id @default(uuid())
+  parking_id    String
+  parking       ParkingFacility @relation(fields: [parking_id], references: [id])
+  license_plate String
+  entry_time    DateTime      @default(now())
+  exit_time     DateTime?
+  spot_id       String?
+  spot          ParkingSpot?  @relation(fields: [spot_id], references: [id])
+  is_subscriber Boolean       @default(false)
+  is_reservation Boolean      @default(false)
+  status        VehicleStatus @default(PARKED)
+  registered_by String?
+  registered_user User?       @relation(fields: [registered_by], references: [id])
+  notes         String?
+  
+  transaction   Transaction?
+}
+
+model Transaction {
+  id               String        @id @default(uuid())
+  vehicle_id       String        @unique
+  vehicle          Vehicle       @relation(fields: [vehicle_id], references: [id])
+  amount_clp       Int
+  duration_minutes Int
+  payment_method   PaymentMethod
+  paid_at          DateTime      @default(now())
+  receipt_number   String        @unique
+  created_by       String?
+  creator          User?         @relation(fields: [created_by], references: [id])
+}
+
+model ParkingWorker {
+  id          String   @id @default(uuid())
+  parking_id  String
+  parking     ParkingFacility @relation(fields: [parking_id], references: [id])
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id])
+  assigned_at DateTime @default(now())
+
+  @@unique([parking_id, user_id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  parking_id String
+  parking    ParkingFacility @relation(fields: [parking_id], references: [id])
+  type       String
+  message    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  parking_id String
+  parking    ParkingFacility @relation(fields: [parking_id], references: [id])
+  user_id    String?
+  user       User?    @relation(fields: [user_id], references: [id])
+  action     String
+  details    Json?
+  created_at DateTime @default(now())
+}
