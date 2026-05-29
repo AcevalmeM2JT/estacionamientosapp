@@ -2,7 +2,9 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getParkingsByOwner } from "@/lib/actions/parking";
 import { getWorkersByParking, removeWorker } from "@/lib/actions/workers";
+import { getWorkerSchedule } from "@/lib/actions/schedule";
 import { AssignWorkerForm } from "./assign-worker-form";
+import { ScheduleEditor } from "./schedule-editor";
 import { formatDate } from "@/lib/format";
 
 export default async function WorkersPage() {
@@ -72,9 +74,12 @@ export default async function WorkersPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Asignado
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Horarios
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -98,6 +103,17 @@ export default async function WorkersPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(worker.assigned_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <ScheduleEditor
+                          workerId={worker.id}
+                          workerName={worker.user.name}
+                          initial={worker.schedules.map((s) => ({
+                            day_of_week: s.day_of_week,
+                            start_time: s.start_time,
+                            end_time: s.end_time,
+                          }))}
+                        />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <form action={async () => {

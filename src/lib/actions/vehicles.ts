@@ -6,6 +6,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "./activity";
 import { checkAndNotifyFull } from "./notifications";
+import { isWorkerOnSchedule } from "./schedule";
 
 const entrySchema = z.object({
   parkingId: z.string().uuid(),
@@ -15,6 +16,11 @@ const entrySchema = z.object({
 export async function registerEntry(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "No autorizado" };
+
+  if (session.user.role === "WORKER") {
+    const schedule = await isWorkerOnSchedule(session.user.id);
+    if (!schedule.allowed) return { error: schedule.reason ?? "Fuera de tu horario laboral" };
+  }
 
   const parkingId = formData.get("parkingId") as string;
   const licensePlate = formData.get("licensePlate") as string;
@@ -235,6 +241,11 @@ export async function processExitFromForm(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "No autorizado" };
 
+  if (session.user.role === "WORKER") {
+    const schedule = await isWorkerOnSchedule(session.user.id);
+    if (!schedule.allowed) return { error: schedule.reason ?? "Fuera de tu horario laboral" };
+  }
+
   const vehicleId = formData.get("vehicleId") as string;
   const paymentMethod = formData.get("paymentMethod") as string;
 
@@ -248,6 +259,11 @@ export async function processExitFromForm(formData: FormData) {
 export async function registerMultipleEntries(formData: FormData) {
   const session = await auth();
   if (!session?.user) return { error: "No autorizado", results: [] };
+
+  if (session.user.role === "WORKER") {
+    const schedule = await isWorkerOnSchedule(session.user.id);
+    if (!schedule.allowed) return { error: schedule.reason ?? "Fuera de tu horario laboral", results: [] };
+  }
 
   const parkingId = formData.get("parkingId") as string;
   const platesRaw = formData.get("plates") as string;

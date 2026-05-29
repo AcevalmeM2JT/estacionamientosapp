@@ -88,7 +88,7 @@ export async function getWorkersByParking(parkingId: string) {
   try {
     return prisma.parkingWorker.findMany({
       where: { parking_id: parkingId },
-      include: { user: true },
+      include: { user: true, schedules: { orderBy: { day_of_week: "asc" } } },
       orderBy: { assigned_at: "desc" },
     });
   } catch {

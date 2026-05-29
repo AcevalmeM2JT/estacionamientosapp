@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getParkingsByOwner, getAvailableSpots } from "@/lib/actions/parking";
 import { getActiveVehicles } from "@/lib/actions/vehicles";
 import { checkSubscriptionActive } from "@/lib/actions/subscription";
+import { isWorkerOnSchedule } from "@/lib/actions/schedule";
 import OperationsClient from "./operations-client";
 import { AutoRefresh } from "./auto-refresh";
 
@@ -11,7 +12,6 @@ export default async function OperationsPage() {
   if (!session?.user) redirect("/login");
 
   const parkings = await getParkingsByOwner();
-  const isSubActive = session.user.role === "WORKER" ? true : await checkSubscriptionActive();
 
   if (parkings.length === 0) {
     return (
@@ -38,6 +38,17 @@ export default async function OperationsPage() {
   const parkingId = parking.id;
   const availableSpots = await getAvailableSpots(parkingId);
   const activeVehiclesRaw = await getActiveVehicles(parkingId);
+  const isSubActive = session.user.role === "WORKER" ? true : await checkSubscriptionActive();
+
+  let scheduleBlocked = false;
+  let scheduleReason = "";
+  if (session.user.role === "WORKER") {
+    const schedule = await isWorkerOnSchedule(session.user.id);
+    if (!schedule.allowed) {
+      scheduleBlocked = true;
+      scheduleReason = schedule.reason ?? "Fuera de tu horario laboral";
+    }
+  }
 
   const activeVehicles = activeVehiclesRaw.map((v) => ({
     id: v.id,
@@ -57,6 +68,14 @@ export default async function OperationsPage() {
         </div>
       )}
 
+      {scheduleBlocked && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+          <p className="text-sm text-orange-800 font-medium text-center">
+            {scheduleReason}
+          </p>
+        </div>
+      )}
+
       <AutoRefresh />
       <OperationsClient
         parkingId={parkingId}
@@ -66,7 +85,7 @@ export default async function OperationsPage() {
         reservedSpots={parking.reserved_spots}
         opensAt={parking.opens_at ?? undefined}
         closesAt={parking.closes_at ?? undefined}
-        isSubActive={isSubActive}
+        isSubActive={isSubActive && !scheduleBlocked}
         activeVehicles={activeVehicles}
       />
     </div>

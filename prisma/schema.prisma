@@ -180,8 +180,22 @@ model ParkingWorker {
   user        User     @relation(fields: [user_id], references: [id])
   assigned_at DateTime @default(now())
 
+  schedules WorkerSchedule[]
+
   @@unique([parking_id, user_id])
   @@index([user_id])
+}
+
+model WorkerSchedule {
+  id          String         @id @default(uuid())
+  worker_id   String
+  worker      ParkingWorker  @relation(fields: [worker_id], references: [id])
+  day_of_week Int
+  start_time  String
+  end_time    String
+  created_at  DateTime       @default(now())
+
+  @@index([worker_id])
 }
 
 model Notification {
