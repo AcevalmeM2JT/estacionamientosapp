@@ -44,7 +44,14 @@ function formatPrice(price: number): string {
 
 function getCurrentTimeInMinutes(): number {
   const now = new Date();
-  return now.getHours() * 60 + now.getMinutes();
+  const timeStr = now.toLocaleTimeString("es-CL", {
+    timeZone: "America/Santiago",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
 }
 
 function parseTimeToMinutes(time: string): number {
