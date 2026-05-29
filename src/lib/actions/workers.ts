@@ -50,7 +50,7 @@ export async function assignWorker(formData: FormData) {
       const passwordHash = await bcrypt.hash(parsed.data.password, 10);
       const newUser = await prisma.user.create({
         data: {
-          email: parsed.data.email,
+          email: parsed.data.email.toLowerCase(),
           password_hash: passwordHash,
           name: parsed.data.name,
           phone: parsed.data.phone,

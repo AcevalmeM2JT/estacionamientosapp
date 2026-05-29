@@ -88,6 +88,9 @@ model ParkingFacility {
   spots          ParkingSpot[]
   notifications  Notification[]
   activity_log   ActivityLog[]
+
+  @@index([owner_id])
+  @@index([is_public, is_active])
 }
 
 model PricingConfig {
@@ -148,6 +151,10 @@ model Vehicle {
   notes         String?
   
   transaction   Transaction?
+
+  @@index([parking_id, status])
+  @@index([license_plate])
+  @@index([status])
 }
 
 model Transaction {
@@ -161,6 +168,8 @@ model Transaction {
   receipt_number   String        @unique
   created_by       String?
   creator          User?         @relation(fields: [created_by], references: [id])
+
+  @@index([paid_at])
 }
 
 model ParkingWorker {
@@ -172,6 +181,7 @@ model ParkingWorker {
   assigned_at DateTime @default(now())
 
   @@unique([parking_id, user_id])
+  @@index([user_id])
 }
 
 model Notification {
@@ -193,4 +203,6 @@ model ActivityLog {
   action     String
   details    Json?
   created_at DateTime @default(now())
+
+  @@index([parking_id, created_at])
 }

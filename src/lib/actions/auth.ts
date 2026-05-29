@@ -29,7 +29,7 @@ export async function registerUser(formData: FormData) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { email: parsed.data.email },
+      where: { email: parsed.data.email.toLowerCase() },
     });
 
     if (existingUser) {
@@ -44,7 +44,7 @@ export async function registerUser(formData: FormData) {
     await prisma.user.create({
       data: {
         name: parsed.data.name,
-        email: parsed.data.email,
+        email: parsed.data.email.toLowerCase(),
         password_hash: passwordHash,
         role: parsed.data.role,
         trial_ends_at: trialEnds,

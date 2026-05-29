@@ -20,8 +20,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!parsed.success) return null;
 
+        const email = parsed.data.email.toLowerCase();
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
+          where: { email },
         });
 
         if (!user || !user.password_hash) return null;
@@ -57,7 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async signIn({ account, profile }) {
       if (account?.provider === "google") {
-        const email = profile?.email;
+        const email = profile?.email?.toLowerCase();
         if (!email) return false;
 
         const existing = await prisma.user.findUnique({ where: { email } });

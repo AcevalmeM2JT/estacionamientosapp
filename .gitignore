@@ -8,3 +8,4 @@ next-env.d.ts
 .vercel
 android/app/estacionamientosapp.keystore
 android/key.properties
+.env.vercel

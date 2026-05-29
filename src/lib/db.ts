@@ -5,8 +5,25 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+function cleanConnectionUrl(url: string | undefined): string {
+  if (!url) return "";
+  try {
+    const u = new URL(url);
+    u.searchParams.delete("pgbouncer");
+    u.searchParams.delete("connection_limit");
+    u.searchParams.delete("pool_timeout");
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
+const connectionString = process.env.DATABASE_URL
+  ? cleanConnectionUrl(process.env.DATABASE_URL)
+  : "";
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString,
 });
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
