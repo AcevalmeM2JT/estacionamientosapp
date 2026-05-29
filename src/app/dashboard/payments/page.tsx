@@ -3,10 +3,7 @@ import { redirect } from "next/navigation";
 import { getParkingsByOwner } from "@/lib/actions/parking";
 import { getRecentTransactions, getTodayStats } from "@/lib/actions/transactions";
 import Link from "next/link";
-
-function formatCLP(amount: number) {
-  return `$${amount.toLocaleString("es-CL")}`;
-}
+import { formatCLP, formatDateTime } from "@/lib/format";
 
 function methodLabel(method: string) {
   const labels: Record<string, string> = {
@@ -126,8 +123,7 @@ export default async function PaymentsPage() {
                       {tx.vehicle.license_plate}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {tx.paid_at.toLocaleDateString("es-CL")}{" "}
-                      {tx.paid_at.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                      {formatDateTime(tx.paid_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {tx.duration_minutes >= 60

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { validateChileanPlate } from "@/lib/plate";
 import { registerEntry, registerMultipleEntries, processExitFromForm } from "@/lib/actions/vehicles";
+import { formatCLP, formatDate, formatTime } from "@/lib/format";
 
 interface OperationsClientProps {
   parkingId: string;
@@ -40,9 +41,7 @@ interface BatchResult {
   error?: string;
 }
 
-function formatCLP(amount: number) {
-  return `$${amount.toLocaleString("es-CL")}`;
-}
+
 
 function formatDuration(minutes: number) {
   const h = Math.floor(minutes / 60);
@@ -394,12 +393,7 @@ export default function OperationsClient({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
-                      {new Date(v.entry_time).toLocaleString("es-CL", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDate(v.entry_time)} {formatTime(v.entry_time)}
                     </span>
                     {!v.is_subscriber && (
                       <div className="flex items-center gap-2">
@@ -473,11 +467,11 @@ export default function OperationsClient({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Ingreso</span>
-                <span className="text-gray-900">{new Date(receipt.entryTime).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-gray-900">{formatTime(receipt.entryTime)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Salida</span>
-                <span className="text-gray-900">{new Date(receipt.exitTime).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-gray-900">{formatTime(receipt.exitTime)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Duración</span>

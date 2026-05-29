@@ -4,6 +4,7 @@ import {
   getActiveSubscription, getSubscriptionHistory, activateSubscription,
   getRequiredTier, getAllTiers, getTrialStatus, getParkingSummary
 } from "@/lib/actions/subscription";
+import { formatDate, formatCLP } from "@/lib/format";
 
 export default async function SubscriptionPage() {
   const session = await auth();
@@ -40,7 +41,7 @@ export default async function SubscriptionPage() {
                 Periodo de prueba gratuito — {trial.daysLeft} día{trial.daysLeft !== 1 ? "s" : ""} restantes
               </h2>
               <p className="text-sm text-green-800">
-                Disfruta de todas las funciones sin costo hasta el {trial.endsAt?.toLocaleDateString("es-CL", { dateStyle: "long" })}. Después del período de prueba, selecciona un plan para continuar operando.
+                Disfruta de todas las funciones sin costo hasta el {formatDate(trial.endsAt!)}. Después del período de prueba, selecciona un plan para continuar operando.
               </p>
             </div>
           </div>
@@ -68,15 +69,15 @@ export default async function SubscriptionPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Inicio</span>
-              <span className="font-medium">{activeSub.start_date.toLocaleDateString("es-CL")}</span>
+              <span className="font-medium">{formatDate(activeSub.start_date)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Vencimiento</span>
-              <span className="font-medium">{activeSub.end_date.toLocaleDateString("es-CL")}</span>
+              <span className="font-medium">{formatDate(activeSub.end_date)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Monto</span>
-              <span className="font-medium">${activeSub.amount_clp.toLocaleString("es-CL")}</span>
+              <span className="font-medium">{formatCLP(activeSub.amount_clp)}</span>
             </div>
           </div>
         </div>
@@ -183,7 +184,7 @@ export default async function SubscriptionPage() {
                 <div>
                   <span className="capitalize font-medium">{sub.plan_type}</span>
                   <span className="text-gray-500 ml-2">
-                    {sub.start_date.toLocaleDateString("es-CL")} - {sub.end_date.toLocaleDateString("es-CL")}
+                    {formatDate(sub.start_date)} - {formatDate(sub.end_date)}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

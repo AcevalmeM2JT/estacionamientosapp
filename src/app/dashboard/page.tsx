@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getActiveSubscription, getRequiredTier, getTotalSpots } from "@/lib/actions/subscription";
 import { getDashboardStats, getRecentActivity } from "@/lib/actions/stats";
 import { DashboardLiveIndicator } from "./live-indicator";
+import { formatTime, formatTimeRange } from "@/lib/format";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -207,10 +208,7 @@ export default async function DashboardPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-900">{v.license_plate}</p>
                           <p className="text-xs text-gray-500">
-                            {new Date(v.entry_time).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-                            {v.status === "COMPLETED" && v.exit_time && (
-                              <> — {new Date(v.exit_time).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</>
-                            )}
+                            {formatTimeRange(v.entry_time, v.exit_time)}
                           </p>
                         </div>
                       </div>

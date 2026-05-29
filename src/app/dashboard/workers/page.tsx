@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getParkingsByOwner } from "@/lib/actions/parking";
 import { getWorkersByParking, removeWorker } from "@/lib/actions/workers";
 import { AssignWorkerForm } from "./assign-worker-form";
+import { formatDate } from "@/lib/format";
 
 export default async function WorkersPage() {
   const session = await auth();
@@ -96,7 +97,7 @@ export default async function WorkersPage() {
                         {worker.user.phone || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(worker.assigned_at).toLocaleDateString("es-CL")}
+                        {formatDate(worker.assigned_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <form action={async () => {

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getParkingsByOwner } from "@/lib/actions/parking";
 import { getSubscribersByParking, deactivateSubscriber } from "@/lib/actions/subscribers";
 import { RegisterSubscriberForm } from "./register-subscriber-form";
+import { formatDate } from "@/lib/format";
 
 export default async function SubscribersPage() {
   const session = await auth();
@@ -102,7 +103,7 @@ export default async function SubscribersPage() {
                         ${sub.monthly_fee_clp.toLocaleString("es-CL")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(sub.start_date).toLocaleDateString("es-CL")} - {new Date(sub.end_date).toLocaleDateString("es-CL")}
+                        {formatDate(sub.start_date)} - {formatDate(sub.end_date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {sub.is_active ? (

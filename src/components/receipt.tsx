@@ -1,5 +1,7 @@
 "use client";
 
+import { formatCLP, formatDate, formatTime, formatDuration } from "@/lib/format";
+
 interface ReceiptData {
   receiptNumber: string | null;
   parkingName: string;
@@ -14,32 +16,6 @@ interface ReceiptData {
 }
 
 export default function Receipt({ data }: { data: ReceiptData }) {
-  function formatCLP(amount: number) {
-    return `$${amount.toLocaleString("es-CL")}`;
-  }
-
-  function formatDate(date: Date) {
-    return date.toLocaleDateString("es-CL", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  }
-
-  function formatTime(date: Date) {
-    return date.toLocaleTimeString("es-CL", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
-  function formatDuration(minutes: number) {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m} min`;
-  }
-
   function methodLabel(method: string) {
     const labels: Record<string, string> = {
       CASH: "Efectivo",

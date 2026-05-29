@@ -2,10 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getParkingsByOwner } from "@/lib/actions/parking";
 import { getRecentActivity } from "@/lib/actions/activity";
-
-function formatCLP(amount: number) {
-  return `$${amount.toLocaleString("es-CL")}`;
-}
+import { formatCLP, formatDate, formatTime } from "@/lib/format";
 
 function methodLabel(method: string) {
   const labels: Record<string, string> = { CASH: "Efectivo", TRANSFER: "Transferencia", CARD: "Tarjeta" };
@@ -123,12 +120,10 @@ export default async function ActivityPage() {
                   </div>
                   <div className="text-right shrink-0 ml-4">
                     <p className="text-xs text-gray-500">
-                      {log.created_at.toLocaleDateString("es-CL", {
-                        day: "2-digit", month: "2-digit", year: "numeric",
-                      })}
+                      {formatDate(log.created_at)}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {log.created_at.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                      {formatTime(log.created_at)}
                     </p>
                     {log.user && (
                       <p className="text-xs text-gray-400 mt-1">{log.user.name}</p>
