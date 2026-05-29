@@ -51,6 +51,8 @@ async function getPublicParkings() {
           availableSpots,
           pricing,
           lowestPrice: lowest,
+          opensAt: parking.opens_at,
+          closesAt: parking.closes_at,
         };
       })
     );
@@ -71,7 +73,7 @@ export default async function HomePage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <span className="text-xl font-bold text-blue-600">
-                EstacionamientosApp
+                DondeEstaciono
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -146,6 +148,8 @@ export default async function HomePage() {
               availableSpots: p.availableSpots,
               pricing: p.pricing,
               lowestPrice: p.lowestPrice,
+              opensAt: p.opensAt,
+              closesAt: p.closesAt,
             }))}
           />
         )}
@@ -153,7 +157,7 @@ export default async function HomePage() {
 
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          EstacionamientosApp © {new Date().getFullYear()} - Chile
+          DondeEstaciono © {new Date().getFullYear()} - Chile
         </div>
       </footer>
     </div>

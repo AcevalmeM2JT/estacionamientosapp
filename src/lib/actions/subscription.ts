@@ -12,6 +12,18 @@ export interface TierInfo {
   isFree: boolean;
 }
 
+export interface TrialInfo {
+  isInTrial: boolean;
+  endsAt: Date | null;
+  daysLeft: number;
+}
+
+export interface ParkingSummary {
+  parkingCount: number;
+  totalSpots: number;
+  spotsPerParking: { name: string; spots: number }[];
+}
+
 const TIERS: TierInfo[] = [
   { tier: 0, label: "Gratis", maxSpots: 1, pricePerMonth: 0, isFree: true },
   { tier: 1, label: "Básico", maxSpots: 10, pricePerMonth: 9990, isFree: false },
@@ -19,22 +31,50 @@ const TIERS: TierInfo[] = [
   { tier: 3, label: "Empresarial", maxSpots: null, pricePerMonth: 39990, isFree: false },
 ];
 
-export async function getTotalSpots(): Promise<number> {
+export async function getAllTiers(): Promise<TierInfo[]> {
+  return TIERS;
+}
+
+export async function getTrialStatus(): Promise<TrialInfo> {
   const session = await auth();
-  if (!session?.user) return 0;
+  if (!session?.user) return { isInTrial: false, endsAt: null, daysLeft: 0 };
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { trial_ends_at: true },
+  });
+
+  if (!user?.trial_ends_at) return { isInTrial: false, endsAt: null, daysLeft: 0 };
+
+  const now = new Date();
+  const isInTrial = now < user.trial_ends_at;
+  const daysLeft = isInTrial ? Math.ceil((user.trial_ends_at.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
+  return { isInTrial, endsAt: user.trial_ends_at, daysLeft };
+}
+
+export async function getParkingSummary(): Promise<ParkingSummary> {
+  const session = await auth();
+  if (!session?.user) return { parkingCount: 0, totalSpots: 0, spotsPerParking: [] };
 
   const parkings = await prisma.parkingFacility.findMany({
     where: { owner_id: session.user.id },
-    select: { total_spots: true },
+    select: { name: true, total_spots: true },
   });
 
-  return parkings.reduce((sum, p) => sum + p.total_spots, 0);
+  return {
+    parkingCount: parkings.length,
+    totalSpots: parkings.reduce((sum, p) => sum + p.total_spots, 0),
+    spotsPerParking: parkings.map(p => ({ name: p.name, spots: p.total_spots })),
+  };
+}
+
+export async function getTotalSpots(): Promise<number> {
+  const summary = await getParkingSummary();
+  return summary.totalSpots;
 }
 
 export async function getRequiredTier(): Promise<TierInfo | null> {
-  const session = await auth();
-  if (!session?.user) return null;
-
   const spots = await getTotalSpots();
 
   for (const tier of TIERS) {
@@ -65,6 +105,9 @@ export async function checkSubscriptionActive(): Promise<boolean> {
   if (!session?.user) return false;
 
   if (session.user.role === "SUPER_ADMIN") return true;
+
+  const trial = await getTrialStatus();
+  if (trial.isInTrial) return true;
 
   const tier = await getRequiredTier();
   if (!tier) return false;

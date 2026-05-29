@@ -12,6 +12,8 @@ const parkingSchema = z.object({
   total_spots: z.coerce.number().min(1, "Debe tener al menos 1 lugar"),
   reserved_spots: z.coerce.number().min(0, "No puede ser negativo"),
   is_public: z.boolean(),
+  opens_at: z.string().optional(),
+  closes_at: z.string().optional(),
   latitude: z.coerce.number().optional(),
   longitude: z.coerce.number().optional(),
 });
@@ -27,6 +29,8 @@ export async function createParking(formData: FormData) {
     total_spots: formData.get("total_spots"),
     reserved_spots: formData.get("reserved_spots") || 0,
     is_public: formData.get("is_public") === "on",
+    opens_at: formData.get("opens_at") || undefined,
+    closes_at: formData.get("closes_at") || undefined,
     latitude: formData.get("latitude"),
     longitude: formData.get("longitude"),
   });
@@ -66,6 +70,8 @@ export async function updateParking(id: string, formData: FormData) {
     total_spots: formData.get("total_spots"),
     reserved_spots: formData.get("reserved_spots") || 0,
     is_public: formData.get("is_public") === "on",
+    opens_at: formData.get("opens_at") || undefined,
+    closes_at: formData.get("closes_at") || undefined,
     latitude: formData.get("latitude"),
     longitude: formData.get("longitude"),
   });
@@ -111,6 +117,8 @@ export async function toggleParkingPublic(id: string) {
     });
 
     revalidatePath("/dashboard/parking");
+    revalidatePath("/");
+    revalidatePath(`/parking/${id}`);
     return { success: true };
   } catch {
     return { error: "Error al cambiar visibilidad" };
@@ -127,6 +135,7 @@ export async function deleteParking(id: string) {
     });
 
     revalidatePath("/dashboard/parking");
+    revalidatePath("/");
     return { success: true };
   } catch {
     return { error: "Error al eliminar el estacionamiento" };

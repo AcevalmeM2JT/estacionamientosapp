@@ -38,12 +38,16 @@ export async function registerUser(formData: FormData) {
 
     const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
+    const trialEnds = new Date();
+    trialEnds.setDate(trialEnds.getDate() + 30);
+
     await prisma.user.create({
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
         password_hash: passwordHash,
         role: parsed.data.role,
+        trial_ends_at: trialEnds,
       },
     });
 
@@ -53,18 +57,19 @@ export async function registerUser(formData: FormData) {
   }
 }
 
-export async function loginUser(formData: FormData) {
+export async function loginUser(_prev: unknown, formData: FormData) {
   try {
     await signIn("credentials", {
       email: formData.get("email"),
       password: formData.get("password"),
-      redirectTo: "/dashboard",
+      redirect: false,
     });
+    return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Email o contraseña incorrectos" };
     }
-    throw error;
+    return { error: "Error al iniciar sesión" };
   }
 }
 

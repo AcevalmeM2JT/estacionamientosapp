@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { getParkingsByOwner, createParking, updateParking, toggleParkingPublic, deleteParking } from "@/lib/actions/parking";
+import { getParkingsByOwner, updateParking, toggleParkingPublic, deleteParking } from "@/lib/actions/parking";
 import { updatePricing } from "@/lib/actions/pricing";
 import LocationPicker from "./location-picker";
+import { CreateParkingForm } from "./create-parking-form";
 
 export default async function ParkingPage() {
   const session = await auth();
@@ -19,94 +20,14 @@ export default async function ParkingPage() {
       </div>
 
       {parkings.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8">
+        <div className="bg-white rounded-xl shadow-md p-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Crear nuevo estacionamiento</h2>
-          <form action={async (formData) => {
-            "use server";
-            await createParking(formData);
-          }} className="space-y-6 max-w-2xl">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre del estacionamiento
-              </label>
-              <input
-                type="text"
-                name="name"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ej: Estacionamiento Central"
-              />
-            </div>
-
-            <LocationPicker />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción (opcional)
-              </label>
-              <textarea
-                name="description"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe tu estacionamiento..."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Total de lugares
-                </label>
-                <input
-                  type="number"
-                  name="total_spots"
-                  required
-                  min={1}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ej: 50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lugares para reserva
-                </label>
-                <input
-                  type="number"
-                  name="reserved_spots"
-                  min={0}
-                  defaultValue={0}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ej: 5"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="is_public"
-                id="is_public"
-                defaultChecked
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="is_public" className="text-sm text-gray-700">
-                Aparecer en el marketplace público
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Crear estacionamiento
-            </button>
-          </form>
+          <CreateParkingForm />
         </div>
       ) : (
         <div className="space-y-6">
           {parkings.map((parking) => (
-            <div key={parking.id} className="bg-white rounded-lg shadow">
+            <div key={parking.id} className="bg-white rounded-xl shadow-md">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -181,6 +102,27 @@ export default async function ParkingPage() {
                         defaultValue={parking.description || ""}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Apertura</label>
+                        <input
+                          type="time"
+                          name="opens_at"
+                          defaultValue={parking.opens_at ?? "08:00"}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Cierre</label>
+                        <input
+                          type="time"
+                          name="closes_at"
+                          defaultValue={parking.closes_at ?? "19:30"}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -317,6 +259,51 @@ export default async function ParkingPage() {
                       </div>
                     </div>
                   </div>
+
+                  {parking.pricing_config && (() => {
+                    const cfg = parking.pricing_config;
+                    const tables: { label: string; price: number }[] = [];
+                    if (cfg.price_per_minute) {
+                      const p = cfg.price_per_minute;
+                      tables.push({ label: "10 min", price: 10 * p });
+                      tables.push({ label: "30 min", price: 30 * p });
+                    }
+                    if (cfg.price_per_hour) {
+                      const p = cfg.price_per_hour;
+                      tables.push({ label: "1 hora", price: p });
+                      tables.push({ label: "2 horas", price: 2 * p });
+                      tables.push({ label: "4 horas", price: 4 * p });
+                    }
+                    if (cfg.price_per_day) {
+                      tables.push({ label: "1 día", price: cfg.price_per_day });
+                    }
+                    if (cfg.price_per_month) {
+                      tables.push({ label: "1 mes", price: cfg.price_per_month });
+                    }
+                    return (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <h4 className="text-xs font-semibold text-blue-900 mb-3">Guía de precios — ejemplos</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          {tables.map((t, i) => (
+                            <div key={i} className="flex items-center justify-between bg-white rounded-md px-3 py-2 text-sm">
+                              <span className="text-blue-800 font-medium">{t.label}</span>
+                              <span className="text-blue-900 font-bold">${t.price.toLocaleString("es-CL")!}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {cfg.price_per_minute && cfg.price_per_hour && (
+                          <p className="text-xs text-blue-700 mt-3">
+                            ⚡ {cfg.price_per_minute}/min × 60 min = ${(cfg.price_per_minute * 60).toLocaleString("es-CL")}/hora vs ${cfg.price_per_hour.toLocaleString("es-CL")}/hora tarifa plana — ahorras ${((cfg.price_per_minute * 60) - cfg.price_per_hour).toLocaleString("es-CL")} por hora.
+                          </p>
+                        )}
+                        {cfg.price_per_hour && cfg.price_per_day && (
+                          <p className="text-xs text-blue-700 mt-1">
+                            ⚡ {cfg.price_per_hour.toLocaleString("es-CL")}/h × 24h = ${(cfg.price_per_hour * 24).toLocaleString("es-CL")}/día vs ${cfg.price_per_day.toLocaleString("es-CL")}/día tarifa plana — ahorras ${((cfg.price_per_hour * 24) - cfg.price_per_day).toLocaleString("es-CL")} por día.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

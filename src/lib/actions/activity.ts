@@ -14,7 +14,7 @@ export async function logActivity(
         parking_id: parkingId,
         user_id: userId,
         action,
-        details: details as any,
+        details: details as Record<string, string | number | boolean | null>,
       },
     });
   } catch {

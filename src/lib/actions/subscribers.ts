@@ -54,6 +54,7 @@ export async function registerSubscriber(formData: FormData) {
     });
 
     revalidatePath("/dashboard/subscribers");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch {
     return { error: "Error al registrar el abonado. Verifica que la patente no esté ya registrada." };
@@ -88,6 +89,7 @@ export async function deactivateSubscriber(id: string) {
     });
 
     revalidatePath("/dashboard/subscribers");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch {
     return { error: "Error al desactivar el abonado" };

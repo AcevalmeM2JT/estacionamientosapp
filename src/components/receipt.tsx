@@ -56,7 +56,7 @@ export default function Receipt({ data }: { data: ReceiptData }) {
         className="bg-white border border-gray-300 rounded-lg p-8 max-w-md mx-auto print:border-none print:shadow-none print:rounded-none print:p-4"
       >
         <div className="text-center border-b border-gray-300 pb-4 mb-4 print:border-gray-400">
-          <h2 className="text-xl font-bold text-gray-900">EstacionamientosApp</h2>
+          <h2 className="text-xl font-bold text-gray-900">DondeEstaciono</h2>
           <p className="text-xs text-gray-500">Comprobante de pago</p>
         </div>
 

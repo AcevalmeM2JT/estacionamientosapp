@@ -63,12 +63,15 @@ export async function registerEntry(formData: FormData) {
       },
     });
 
+    const isReservation = formData.get("isReservation") === "true";
+
     await prisma.vehicle.create({
       data: {
         parking_id: parkingId,
         license_plate: licensePlate.toUpperCase(),
         registered_by: session.user.id,
         is_subscriber: !!isSubscriber,
+        is_reservation: isReservation,
         status: "PARKED",
       },
     });
@@ -81,6 +84,7 @@ export async function registerEntry(formData: FormData) {
     await checkAndNotifyFull(parkingId, session.user.id);
 
     revalidatePath("/dashboard/operations");
+    revalidatePath("/dashboard");
     return { success: true, isSubscriber: !!isSubscriber };
   } catch {
     return { error: "Error al registrar la entrada" };
@@ -194,12 +198,16 @@ export async function processExit(vehicleId: string, paymentMethod: string) {
       if (!vehicle.is_subscriber && costResult.cost > 0) {
         const receiptNumber = `REC-${Date.now()}-${crypto.randomUUID().substring(0, 8).toUpperCase()}`;
         
+        const validMethods = ["CASH", "TRANSFER", "CARD"] as const;
+        const pm = paymentMethod.toUpperCase();
+        const paymentMethodFinal = validMethods.includes(pm as typeof validMethods[number]) ? pm as "CASH" | "TRANSFER" | "CARD" : "CASH";
+
         await tx.transaction.create({
           data: {
             vehicle_id: vehicleId,
             amount_clp: costResult.cost,
             duration_minutes: costResult.durationMinutes,
-            payment_method: paymentMethod.toUpperCase() as "CASH" | "TRANSFER" | "CARD",
+            payment_method: paymentMethodFinal,
             receipt_number: receiptNumber,
             created_by: session.user.id,
           },
@@ -215,7 +223,9 @@ export async function processExit(vehicleId: string, paymentMethod: string) {
     });
 
     revalidatePath("/dashboard/operations");
-    return { success: true, cost: costResult.cost };
+    revalidatePath("/dashboard/payments");
+    revalidatePath("/dashboard");
+    return { success: true, cost: costResult.cost, durationMinutes: costResult.durationMinutes };
   } catch {
     return { error: "Error al procesar la salida" };
   }
@@ -233,6 +243,99 @@ export async function processExitFromForm(formData: FormData) {
   }
 
   return processExit(vehicleId, paymentMethod);
+}
+
+export async function registerMultipleEntries(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) return { error: "No autorizado", results: [] };
+
+  const parkingId = formData.get("parkingId") as string;
+  const platesRaw = formData.get("plates") as string;
+  const isReservation = formData.get("isReservation") === "true";
+
+  if (!parkingId || !platesRaw) return { error: "Datos incompletos", results: [] };
+
+  const plates = platesRaw
+    .split(/[\n,]+/)
+    .map((p) => p.trim().toUpperCase())
+    .filter((p) => p.length >= 5 && p.length <= 6);
+
+  if (plates.length === 0) return { error: "Ingresa al menos una patente válida", results: [] };
+  if (plates.length > 50) return { error: "Máximo 50 patentes por vez", results: [] };
+
+  try {
+    const parking = await prisma.parkingFacility.findUnique({
+      where: { id: parkingId },
+    });
+
+    if (!parking) return { error: "Estacionamiento no encontrado", results: [] };
+
+    const existingPlates = await prisma.vehicle.findMany({
+      where: {
+        parking_id: parkingId,
+        license_plate: { in: plates },
+        status: "PARKED",
+      },
+      select: { license_plate: true },
+    });
+    const existingSet = new Set(existingPlates.map((v) => v.license_plate));
+
+    const parkedCount = await prisma.vehicle.count({
+      where: { parking_id: parkingId, status: "PARKED" },
+    });
+    const availableSpots = parking.total_spots - parkedCount;
+
+    const subscribers = await prisma.subscriber.findMany({
+      where: {
+        parking_id: parkingId,
+        license_plate: { in: plates },
+        is_active: true,
+      },
+      select: { license_plate: true },
+    });
+    const subscriberSet = new Set(subscribers.map((s) => s.license_plate));
+
+    const results: { plate: string; success: boolean; error?: string; isSubscriber?: boolean }[] = [];
+    let spotsUsed = 0;
+
+    for (const plate of plates) {
+      if (existingSet.has(plate)) {
+        results.push({ plate, success: false, error: "Ya está estacionado" });
+        continue;
+      }
+      if (spotsUsed >= availableSpots) {
+        results.push({ plate, success: false, error: "No hay lugares disponibles" });
+        continue;
+      }
+
+      await prisma.vehicle.create({
+        data: {
+          parking_id: parkingId,
+          license_plate: plate,
+          registered_by: session.user.id,
+          is_subscriber: subscriberSet.has(plate),
+          is_reservation: isReservation,
+          status: "PARKED",
+        },
+      });
+
+      await logActivity(parkingId, session.user.id, "VEHICLE_ENTRY", {
+        license_plate: plate,
+        is_subscriber: subscriberSet.has(plate),
+      });
+
+      results.push({ plate, success: true, isSubscriber: subscriberSet.has(plate) });
+      spotsUsed++;
+    }
+
+    await checkAndNotifyFull(parkingId, session.user.id);
+
+    revalidatePath("/dashboard/operations");
+    revalidatePath("/dashboard");
+    return { success: true, results };
+  } catch {
+    return { error: "Error al registrar entradas", results: [] };
+  }
 }
 
 export async function getActiveVehicles(parkingId: string) {

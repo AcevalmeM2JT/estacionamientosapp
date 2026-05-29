@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
 }
 
 enum Role {
@@ -35,11 +34,12 @@ enum PaymentMethod {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  password_hash String
+  password_hash String?
   role          Role      @default(WORKER)
   name          String
   phone         String?
   is_active     Boolean   @default(true)
+  trial_ends_at DateTime?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
 
@@ -76,6 +76,8 @@ model ParkingFacility {
   is_active     Boolean  @default(true)
   latitude      Float?
   longitude     Float?
+  opens_at      String?
+  closes_at     String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

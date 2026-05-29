@@ -74,6 +74,7 @@ export async function assignWorker(formData: FormData) {
     });
 
     revalidatePath("/dashboard/workers");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch {
     return { error: "Error al asignar trabajador. Verifica que el email no esté ya registrado." };
@@ -116,6 +117,7 @@ export async function removeWorker(id: string) {
     });
 
     revalidatePath("/dashboard/workers");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch {
     return { error: "Error al remover trabajador" };

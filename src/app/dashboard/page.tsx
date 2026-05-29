@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import Link from "next/link";
 import { getActiveSubscription, getRequiredTier, getTotalSpots } from "@/lib/actions/subscription";
 import { getDashboardStats, getRecentActivity } from "@/lib/actions/stats";
+import { DashboardLiveIndicator } from "./live-indicator";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -29,7 +30,8 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           Bienvenido, {session.user.name}
         </h1>
-        <p className="text-gray-600 mt-1">Panel de control de tu estacionamiento</p>
+        <p className="text-gray-700 mt-1">Panel de control de tu estacionamiento</p>
+        <DashboardLiveIndicator />
       </div>
 
       {requiredTier && !requiredTier.isFree && !subscription && session.user.role !== "SUPER_ADMIN" && (
@@ -49,10 +51,10 @@ export default async function DashboardPage() {
       {parkingCount > 0 && stats && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ingresos hoy</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Ingresos hoy</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
                     ${stats.incomeToday.toLocaleString("es-CL")}
                   </p>
@@ -63,7 +65,7 @@ export default async function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+                <p className="text-xs text-gray-500 mt-2">
                 {stats.entriesToday} vehículo{stats.entriesToday !== 1 ? "s" : ""} hoy
               </p>
             </div>
@@ -71,7 +73,7 @@ export default async function DashboardPage() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ocupación</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Ocupación</p>
                   <p className={`text-2xl font-bold mt-1 ${stats.parkedCount > 0 ? "text-gray-900" : "text-green-600"}`}>
                     {stats.parkedCount} / {stats.totalSpots}
                   </p>
@@ -86,7 +88,7 @@ export default async function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-500 mt-2">
                 {stats.totalSpots - stats.parkedCount} disponible{stats.totalSpots - stats.parkedCount !== 1 ? "s" : ""}
               </p>
             </div>
@@ -94,7 +96,7 @@ export default async function DashboardPage() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Estacionamientos</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Estacionamientos</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{parkingCount}</p>
                 </div>
                 <div className="w-11 h-11 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -103,13 +105,13 @@ export default async function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">{workerCount} trabajador{workerCount !== 1 ? "es" : ""}</p>
+              <p className="text-xs text-gray-500 mt-2">{workerCount} trabajador{workerCount !== 1 ? "es" : ""}</p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Abonados</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Abonados</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{subscriberCount}</p>
                 </div>
                 <div className="w-11 h-11 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -118,12 +120,12 @@ export default async function DashboardPage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">{subscriberCount > 0 ? "Activos" : "Sin abonados"}</p>
+              <p className="text-xs text-gray-500 mt-2">{subscriberCount > 0 ? "Activos" : "Sin abonados"}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Acciones rápidas</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Link
@@ -186,7 +188,7 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-900">Últimos movimientos</h3>
                 <Link href="/dashboard/payments" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
@@ -195,7 +197,7 @@ export default async function DashboardPage() {
               </div>
 
               {recentVehicles.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Sin movimientos recientes</p>
+                <p className="text-sm text-gray-500 text-center py-8">Sin movimientos recientes</p>
               ) : (
                 <div className="space-y-3">
                   {recentVehicles.slice(0, 5).map((v) => (
@@ -204,7 +206,7 @@ export default async function DashboardPage() {
                         <span className={`w-2 h-2 rounded-full ${v.status === "PARKED" ? "bg-green-500" : "bg-gray-300"}`} />
                         <div>
                           <p className="text-sm font-medium text-gray-900">{v.license_plate}</p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-gray-500">
                             {new Date(v.entry_time).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
                             {v.status === "COMPLETED" && v.exit_time && (
                               <> — {new Date(v.exit_time).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</>
@@ -227,7 +229,7 @@ export default async function DashboardPage() {
       )}
 
       {parkingCount === 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-8 text-center">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>

@@ -8,7 +8,7 @@ const SANTIAGO_CENTER = { lat: -33.4489, lng: -70.6693 };
 interface MapPickerProps {
   defaultLat?: number | null;
   defaultLng?: number | null;
-  onLocationChange: (lat: number, lng: number, address: string) => void;
+  onLocationChange: (lat: number, lng: number) => void;
 }
 
 export default function MapPicker({ defaultLat, defaultLng, onLocationChange }: MapPickerProps) {
@@ -47,12 +47,11 @@ export default function MapPicker({ defaultLat, defaultLng, onLocationChange }: 
     geocodeTimeoutRef.current = setTimeout(() => {
       geocoder.geocode({ location: { lat, lng } }, (results, status) => {
         if (status === "OK" && results?.[0]) {
-          const addr = results[0].formatted_address;
-          setAddress(addr);
-          onLocationChange(lat, lng, addr);
+          setAddress(results[0].formatted_address);
         } else {
-          onLocationChange(lat, lng, `${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+          setAddress(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
         }
+        onLocationChange(lat, lng);
       });
     }, 200);
   }
@@ -87,7 +86,7 @@ export default function MapPicker({ defaultLat, defaultLng, onLocationChange }: 
     setMarker({ lat, lng });
     setCenter({ lat, lng });
     setDragPreview(null);
-    onLocationChange(lat, lng, place.formatted_address || "");
+    onLocationChange(lat, lng);
   }
 
   function useCurrentLocation() {

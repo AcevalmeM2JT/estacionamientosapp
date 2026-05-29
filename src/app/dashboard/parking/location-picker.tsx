@@ -12,12 +12,10 @@ interface LocationPickerProps {
 export default function LocationPicker({ defaultLat, defaultLng, defaultAddress }: LocationPickerProps) {
   const [lat, setLat] = useState<number | null>(defaultLat ?? null);
   const [lng, setLng] = useState<number | null>(defaultLng ?? null);
-  const [addressValue, setAddressValue] = useState(defaultAddress ?? "");
 
-  function handleLocationChange(latitude: number, longitude: number, address: string) {
+  function handleLocationChange(latitude: number, longitude: number) {
     setLat(latitude);
     setLng(longitude);
-    setAddressValue(address);
   }
 
   return (
@@ -42,10 +40,9 @@ export default function LocationPicker({ defaultLat, defaultLng, defaultAddress 
         <input
           type="text"
           name="address"
-          value={addressValue}
-          onChange={(e) => setAddressValue(e.target.value)}
+          defaultValue={defaultAddress ?? ""}
           required
-          placeholder="Selecciona una ubicación en el mapa o escribe la dirección"
+          placeholder="Ej: Calle Prat 1941"
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

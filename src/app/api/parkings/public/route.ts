@@ -49,6 +49,8 @@ export async function GET() {
           availableSpots,
           pricing,
           lowestPrice: lowest,
+          opensAt: parking.opens_at,
+          closesAt: parking.closes_at,
         };
       })
     );

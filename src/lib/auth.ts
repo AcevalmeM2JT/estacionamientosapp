@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -37,6 +38,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   pages: {
     signIn: "/login",
@@ -49,10 +55,46 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 8 * 60 * 60,
   },
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "google") {
+        const email = profile?.email;
+        if (!email) return false;
+
+        const existing = await prisma.user.findUnique({ where: { email } });
+
+        if (!existing) {
+          const trialEnds = new Date();
+          trialEnds.setDate(trialEnds.getDate() + 30);
+
+          await prisma.user.create({
+            data: {
+              email,
+              name: profile?.name ?? email.split("@")[0],
+              role: "PARKING_ADMIN",
+              trial_ends_at: trialEnds,
+            },
+          });
+        }
+
+        return true;
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
-        token.id = user.id;
+        if (user.id && user.role) {
+          token.role = user.role;
+          token.id = user.id;
+        } else if (user.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true, role: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.id = dbUser.id;
+          }
+        }
       }
       return token;
     },
