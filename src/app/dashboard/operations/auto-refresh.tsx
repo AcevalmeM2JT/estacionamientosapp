@@ -3,6 +3,6 @@
 import { useAutoRefresh } from "@/components/auto-refresh";
 
 export function AutoRefresh() {
-  useAutoRefresh(10000);
+  useAutoRefresh(30000);
   return null;
 }
