@@ -146,19 +146,56 @@ export async function getParkingsByOwner() {
   const session = await auth();
   if (!session?.user) return [];
 
+  const parkingIds = await getParkingIdsForUser(session.user.id, session.user.role);
+
+  if (parkingIds.length === 0) return [];
+
   return prisma.parkingFacility.findMany({
-    where: { owner_id: session.user.id },
+    where: { id: { in: parkingIds } },
     include: { pricing_config: true },
     orderBy: { created_at: "desc" },
   });
+}
+
+export async function getParkingIdsForUser(userId: string, role?: string | null): Promise<string[]> {
+  if (role === "WORKER") {
+    const workers = await prisma.parkingWorker.findMany({
+      where: { user_id: userId },
+      select: { parking_id: true },
+    });
+    return workers.map((w) => w.parking_id);
+  }
+
+  if (!role) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role === "WORKER") {
+      const workers = await prisma.parkingWorker.findMany({
+        where: { user_id: userId },
+        select: { parking_id: true },
+      });
+      return workers.map((w) => w.parking_id);
+    }
+  }
+
+  const parkings = await prisma.parkingFacility.findMany({
+    where: { owner_id: userId },
+    select: { id: true },
+  });
+  return parkings.map((p) => p.id);
 }
 
 export async function getParkingById(id: string) {
   const session = await auth();
   if (!session?.user) return null;
 
+  const parkingIds = await getParkingIdsForUser(session.user.id, session.user.role);
+  if (!parkingIds.includes(id)) return null;
+
   return prisma.parkingFacility.findUnique({
-    where: { id, owner_id: session.user.id },
+    where: { id },
     include: { pricing_config: true },
   });
 }
@@ -167,8 +204,11 @@ export async function getAvailableSpots(parkingId: string) {
   const session = await auth();
   if (!session?.user) return 0;
 
+  const parkingIds = await getParkingIdsForUser(session.user.id, session.user.role);
+  if (!parkingIds.includes(parkingId)) return 0;
+
   const parking = await prisma.parkingFacility.findUnique({
-    where: { id: parkingId, owner_id: session.user.id },
+    where: { id: parkingId },
   });
 
   if (!parking) return 0;

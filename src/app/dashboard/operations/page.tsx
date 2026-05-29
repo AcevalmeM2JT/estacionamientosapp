@@ -10,8 +10,8 @@ export default async function OperationsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const isSubActive = await checkSubscriptionActive();
   const parkings = await getParkingsByOwner();
+  const isSubActive = session.user.role === "WORKER" ? true : await checkSubscriptionActive();
 
   if (parkings.length === 0) {
     return (

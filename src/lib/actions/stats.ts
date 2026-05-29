@@ -2,14 +2,12 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getParkingIdsForUser } from "./parking";
 
-export async function getDashboardStats(userId: string) {
+export async function getDashboardStats(userId: string, role?: string | null) {
   try {
-    const parkings = await prisma.parkingFacility.findMany({
-      where: { owner_id: userId },
-    });
+    const parkingIds = await getParkingIdsForUser(userId, role);
 
-    const parkingIds = parkings.map((p) => p.id);
     if (parkingIds.length === 0) {
       return { totalParkings: 0, parkings: [], totalSpots: 0, parkedCount: 0, incomeToday: 0, entriesToday: 0 };
     }
@@ -17,7 +15,10 @@ export async function getDashboardStats(userId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const [parkedCount, todayEntries, todayTransactions] = await Promise.all([
+    const [parkings, parkedCount, todayEntries, todayTransactions] = await Promise.all([
+      prisma.parkingFacility.findMany({
+        where: { id: { in: parkingIds } },
+      }),
       prisma.vehicle.count({
         where: { parking_id: { in: parkingIds }, status: "PARKED" },
       }),
@@ -48,14 +49,9 @@ export async function getDashboardStats(userId: string) {
   }
 }
 
-export async function getRecentActivity(userId: string) {
+export async function getRecentActivity(userId: string, role?: string | null) {
   try {
-    const parkings = await prisma.parkingFacility.findMany({
-      where: { owner_id: userId },
-      select: { id: true },
-    });
-
-    const parkingIds = parkings.map((p) => p.id);
+    const parkingIds = await getParkingIdsForUser(userId, role);
     if (parkingIds.length === 0) return [];
 
     const vehicles = await prisma.vehicle.findMany({

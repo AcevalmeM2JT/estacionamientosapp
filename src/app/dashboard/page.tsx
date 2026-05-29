@@ -14,16 +14,23 @@ export default async function DashboardPage() {
   const subscription = await getActiveSubscription();
   const requiredTier = await getRequiredTier();
   const totalSpots = await getTotalSpots();
-  const stats = await getDashboardStats(session.user.id);
-  const recentVehicles = await getRecentActivity(session.user.id);
+  const stats = await getDashboardStats(session.user.id, session.user.role);
+  const recentVehicles = await getRecentActivity(session.user.id, session.user.role);
 
   const parkingCount = stats?.totalParkings ?? 0;
-  const workerCount = await prisma.parkingWorker.count({
-    where: { user_id: session.user.id },
-  });
-  const subscriberCount = await prisma.subscriber.count({
-    where: { parking: { owner_id: session.user.id }, is_active: true },
-  });
+  const isWorker = session.user.role === "WORKER";
+
+  const workerCount = isWorker
+    ? 0
+    : await prisma.parkingWorker.count({
+        where: { parking: { owner_id: session.user.id } },
+      });
+
+  const subscriberCount = parkingCount > 0
+    ? await prisma.subscriber.count({
+        where: { parking_id: { in: stats?.parkings?.map((p) => p.id) ?? [] }, is_active: true },
+      })
+    : 0;
 
   return (
     <div>
